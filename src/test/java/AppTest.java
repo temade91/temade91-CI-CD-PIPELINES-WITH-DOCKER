@@ -1,16 +1,15 @@
-import com.example.App;
-import org.junit.Test;
-import static org.junit.Assert.*;
+package com.example;
+
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class AppTest {
 
     @Test
-    public void testApp() {
-        App myApp = new App();
-
-        String result = myApp.getStatus();
-
+    void testGetStatus() {
+        App app = new App();
+        String result = app.getStatus();
         assertEquals("OK", result);
     }
-
+    
 }
