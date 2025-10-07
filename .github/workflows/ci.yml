@@ -32,3 +32,14 @@ jobs:
 
       - name: Build with Gradle Wrapper
         run: ./gradlew build
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.gradle/caches
+          key: gradle-home-v1-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            gradle-home-v1-${{ runner.os }}-
+
+      - name: Build with Gradle
+        run: ./gradlew build --stacktrace
