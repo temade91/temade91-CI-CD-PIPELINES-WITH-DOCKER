@@ -1,54 +1,54 @@
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
-# This workflow will build a Java project with Gradle and cache/restore any dependencies to improve the workflow execution time
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-gradle
-
-name: Java CI with Gradle
+name: Java CI/CD with Gradle and AKS
 
 on:
   push:
-    branches: [ "master" ]
+    branches: 
+      - master
+      - feature/update
   pull_request:
-    branches: [ "master" ]
+    branches:
+      - master
+
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
+      # 1️⃣ Checkout code
       - name: Checkout
         uses: actions/checkout@v4
 
+      # 2️⃣ Set up JDK
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      # Configure Gradle for optimal use in GitHub Actions, including caching of downloaded dependencies.
-      # See: https://github.com/gradle/actions/blob/main/setup-gradle/README.md
+      # 3️⃣ Setup Gradle
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      # ✅ Build the JAR first so Docker can copy it
+      # 4️⃣ Build Spring Boot app
       - name: Build Spring Boot app
         run: ./gradlew clean bootJar
 
+      # 5️⃣ Setup Docker Buildx and QEMU
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      # 6️⃣ Docker login
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # ✅ Build and push Docker image with correct tag
+      # 7️⃣ Build and push Docker image
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
@@ -57,3 +57,29 @@ jobs:
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/ci-cd-docker-project:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/ci-cd-docker-project:${{ github.sha }}
+
+      # 8️⃣ Azure login
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # 9️⃣ Set AKS context
+      - name: Set AKS context
+        run: |
+          az aks get-credentials \
+            --resource-group ${{ secrets.AKS_RESOURCE_GROUP }} \
+            --name ${{ secrets.AKS_CLUSTER_NAME }}
+
+      # 🔟 Update manifest and apply
+      - name: Update deployment image and deploy to AKS
+        run: |
+          # Replace placeholder image in deployment.yaml with new Docker image
+          sed -i "s|image: .*|image: ${{ secrets.DOCKERHUB_USERNAME }}/ci-cd-docker-project:${{ github.sha }}|" k8s/deployment.yaml
+
+          # Apply Deployment and Service
+          kubectl apply -f k8s/deployment.yaml
+          kubectl apply -f k8s/service.yaml
+
+          # Wait for rollout to finish
+          kubectl rollout status deployment/ci-cd-deployment
