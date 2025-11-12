@@ -2,9 +2,13 @@ name: Java CI/CD with Gradle and AKS
 
 on:
   push:
-    branches: [ "master" ]
+    branches: 
+      - master
+      - feature/update
   pull_request:
-    branches: [ "master" ]
+    branches:
+      - master
+
 
 jobs:
   build-and-deploy:
