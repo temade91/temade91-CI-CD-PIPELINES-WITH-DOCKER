@@ -71,15 +71,16 @@ jobs:
             --resource-group ${{ secrets.AKS_RESOURCE_GROUP }} \
             --name ${{ secrets.AKS_CLUSTER_NAME }}
 
-      # 🔟 Apply Kubernetes manifests
-      - name: Apply Kubernetes manifests
+      # 🔟 Update manifest and apply
+      - name: Update deployment image and deploy to AKS
         run: |
-          # Apply Service first
-          kubectl apply -f k8s/service.yaml
+          # Replace placeholder image in deployment.yaml with new image tag
+          Write-Host "Updating deployment manifest with new image..."
+          (Get-Content k8s/deployment.yaml) -replace "image: .*", "image: ${{ secrets.DOCKERHUB_USERNAME }}/ci-cd-docker-project:${{ github.sha }}" | Set-Content k8s/deployment.yaml
           
-          # Deploy with new image tag
-          kubectl set image deployment/ci-cd-deployment \
-            ci-cd-container=${{ secrets.DOCKERHUB_USERNAME }}/ci-cd-docker-project:${{ github.sha }}
+          # Apply Deployment and Service manifests
+          kubectl apply -f k8s/deployment.yaml
+          kubectl apply -f k8s/service.yaml
           
           # Wait for rollout to finish
           kubectl rollout status deployment/ci-cd-deployment
