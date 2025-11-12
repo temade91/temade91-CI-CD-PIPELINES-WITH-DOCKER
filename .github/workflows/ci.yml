@@ -74,13 +74,12 @@ jobs:
       # 🔟 Update manifest and apply
       - name: Update deployment image and deploy to AKS
         run: |
-          # Replace placeholder image in deployment.yaml with new image tag
-          Write-Host "Updating deployment manifest with new image..."
-          (Get-Content k8s/deployment.yaml) -replace "image: .*", "image: ${{ secrets.DOCKERHUB_USERNAME }}/ci-cd-docker-project:${{ github.sha }}" | Set-Content k8s/deployment.yaml
-          
-          # Apply Deployment and Service manifests
+          # Replace placeholder image in deployment.yaml with new Docker image
+          sed -i "s|image: .*|image: ${{ secrets.DOCKERHUB_USERNAME }}/ci-cd-docker-project:${{ github.sha }}|" k8s/deployment.yaml
+
+          # Apply Deployment and Service
           kubectl apply -f k8s/deployment.yaml
           kubectl apply -f k8s/service.yaml
-          
+
           # Wait for rollout to finish
           kubectl rollout status deployment/ci-cd-deployment
