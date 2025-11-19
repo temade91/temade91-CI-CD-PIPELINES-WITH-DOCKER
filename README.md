@@ -1,6 +1,6 @@
 Java CI/CD with Gradle and AKS
 
-This project demonstrates a fully automated CI/CD pipeline for a Spring Boot application using Gradle, Docker, GitHub Actions, and Azure Kubernetes Service (AKS). The pipeline builds, tests, containerizes, and deploys the application whenever changes are pushed to specific branches.
+This project demonstrates a fully automated CI/CD pipeline for a Spring Boot application using GitHub Actions, Docker, and Azure Kubernetes Service (AKS). The pipeline builds, tests, containerizes, and deploys the application automatically whenever changes are pushed to designated branches.
 
 Key Features
 
@@ -35,4 +35,3 @@ Docker Build & Push: Builds the Docker image, tags it, and pushes it to Docker H
 Azure Login & AKS Context Setup: Logs in to Azure and sets the Kubernetes context.
 
 Deploy to AKS: Updates the deployment manifest with the new Docker image and applies it to the cluster.
-    
